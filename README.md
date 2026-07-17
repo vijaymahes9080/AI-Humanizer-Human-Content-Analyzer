@@ -1,5 +1,9 @@
 # AI Humanizer Pro
 
+<p align="center">
+  <img src="images/logo.png" alt="AI Humanizer Pro Logo" width="600" />
+</p>
+
 A production-grade, local-first web application designed to help users analyze and humanize AI-generated text. It uses client-side linguistic heuristics to make robotic AI-style text sound natural, varied, and fluent while 100% preserving factual data (names, dates, numbers, URLs, and references).
 
 This application runs entirely in the browser with **no backend APIs, no external libraries, and no frameworks**.
@@ -32,6 +36,24 @@ Computes a complete profile of the text:
 - **Theme Engine**: Seamless switching between dark glassmorphism (default) and crisp light glassmorphism.
 - **Professional Exports**: Export to plain `.txt` file, or trigger native browser printing styled as a professional report card.
 - **Offline Support**: Cache assets via service worker for 100% offline support.
+
+---
+
+## Visual Showcase
+
+<p align="center">
+  <h3>Interactive SaaS UI Dashboard</h3>
+  <img src="images/dashboard.png" alt="AI Humanizer Pro Dashboard UI" width="700" />
+  <br>
+  <em>SaaS-grade Dark Mode dashboard with dual text panes, highlights, and interactive canvas components.</em>
+</p>
+
+<p align="center">
+  <h3>Generative "Linguistic DNA" Flow Blob</h3>
+  <img src="images/dna_blob.png" alt="Linguistic DNA Blob" width="500" />
+  <br>
+  <em>Generative fluid wave blob visualizer indicating the rhythm and organic flow transitions of humanized writing.</em>
+</p>
 
 ---
 
