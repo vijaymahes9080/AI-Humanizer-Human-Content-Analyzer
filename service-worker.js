@@ -3,7 +3,7 @@
  * Enables offline loading of assets (HTML, CSS, JavaScript) using a Cache-First strategy.
  */
 
-const CACHE_NAME = 'ai-humanizer-pro-v1';
+const CACHE_NAME = 'ai-humanizer-pro-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -40,22 +40,33 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch Event - Cache-First Fallback to Network
+// Fetch Event - Network-First falling back to Cache
 self.addEventListener('fetch', (e) => {
+  // Only intercept HTTP/S requests
+  if (!e.request.url.startsWith('http')) return;
+
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(e.request).then((networkResponse) => {
-        // Cache new resource dynamically if needed
+    fetch(e.request)
+      .then((networkResponse) => {
+        // Update cache dynamically with fresh response
+        if (networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseClone);
+          });
+        }
         return networkResponse;
-      });
-    }).catch(() => {
-      // Fallback if network and cache fail
-      if (e.request.mode === 'navigate') {
-        return caches.match('./index.html');
-      }
-    })
+      })
+      .catch(() => {
+        // Offline fallback: serve from cache
+        return caches.match(e.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          if (e.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+        });
+      })
   );
 });
