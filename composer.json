@@ -1,0 +1,12 @@
+{
+    "name": "vijaymahes/ai-humanizer-pro",
+    "description": "AI Humanizer Pro - Client-side AI text analysis and humanization engine",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Vijay Mahes",
+            "email": "Vijaypradhap2004@gmail.com"
+        }
+    ],
+    "require": {}
+}

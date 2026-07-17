@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Humanizer Pro - Professional client-side tool to analyze and make AI writing natural, flowing, and readable.">
+  <title>AI Humanizer Pro - SaaS Writer & Text Analyzer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Offline Status Banner -->
+  <div id="offline-banner" class="offline-banner">
+    You are currently offline. AI Humanizer Pro runs 100% client-side and is fully functional.
+  </div>
+
+  <div class="app-container">
+    
+    <!-- SVG Icon Sprite Definition -->
+    <svg style="display: none;">
+      <!-- Logo Sparkles -->
+      <g id="icon-logo">
+        <path d="M12 2L14.85 9.15L22 12L14.85 14.85L12 22L9.15 14.85L2 12L9.15 9.15L12 2Z" />
+        <path d="M19 3L20.2 6.2L23.4 7.4L20.2 8.6L19 11.8L17.8 8.6L14.6 7.4L17.8 6.2L19 3Z" opacity="0.7"/>
+      </g>
+      <!-- Trash / Clear -->
+      <g id="icon-trash">
+        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+      </g>
+      <!-- Clipboard Copy -->
+      <g id="icon-copy">
+        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+      </g>
+      <!-- Clipboard Paste -->
+      <g id="icon-paste">
+        <path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1s-1-.45-1-1s.45-1 1-1zm7 18H5V4h2v3h10V4h2v16z" />
+      </g>
+      <!-- Undo -->
+      <g id="icon-undo">
+        <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
+      </g>
+      <!-- Redo -->
+      <g id="icon-redo">
+        <path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z" />
+      </g>
+      <!-- Star (Favorite) -->
+      <g id="icon-star">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2L9.19 8.63L2 9.24l5.46 4.73L5.82 21z" />
+      </g>
+      <!-- Sun (Light Mode) -->
+      <g id="icon-sun">
+        <path d="M20 15.31L23.31 12 20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6s6 2.69 6 6s-2.69 6-6 6z" />
+      </g>
+      <!-- Moon (Dark Mode) -->
+      <g id="icon-moon">
+        <path d="M12.3 22h-.1c-5.5 0-10-4.5-10-10C2.2 6.8 6.3 2.5 11.5 2c.3 0 .6.2.7.5c.1.3.1.6-.1.8c-1.3 1.7-2 3.8-2 6c0 5 4 9 9 9c2.2 0 4.3-.7 6-2c.2-.2.6-.2.8-.1c.3.1.5.4.5.7c-.5 5.2-4.8 9.3-10.1 9.1z" />
+      </g>
+      <!-- Download (Export) -->
+      <g id="icon-download">
+        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z" />
+      </g>
+      <!-- Print -->
+      <g id="icon-print">
+        <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1s1 .45 1 1s-.45 1-1 1zm-1-9H6v4h12V3z" />
+      </g>
+      <!-- Magic Wand (Humanize) -->
+      <g id="icon-wand">
+        <path d="M7.5 5.6L10 7L8.6 4.5L10 2L7.5 3.4L5 2L6.4 4.5L5 7L7.5 5.6zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14l-2.5 1.4zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5L22 2zM9 9.5l11.5 11.5c.39.39.39 1.02 0 1.41s-1.02.39-1.41 0L7.6 10.9c-.39-.39-.39-1.02 0-1.41s1.02-.39 1.41 0z" />
+      </g>
+    </svg>
+
+    <!-- Header Section -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24"><use href="#icon-logo"></use></svg>
+        </div>
+        <div>
+          <h1>AI Humanizer Pro</h1>
+        </div>
+        <span class="tag">Client Engine v1.0</span>
+      </div>
+
+      <div class="header-controls">
+        <!-- Undo/Redo -->
+        <button id="btn-undo" class="btn-icon" title="Undo (Ctrl+Z)" disabled>
+          <svg viewBox="0 0 24 24"><use href="#icon-undo"></use></svg>
+        </button>
+        <button id="btn-redo" class="btn-icon" title="Redo (Ctrl+Y)" disabled>
+          <svg viewBox="0 0 24 24"><use href="#icon-redo"></use></svg>
+        </button>
+
+        <!-- Toggle Theme -->
+        <button id="btn-theme-toggle" class="btn-icon" title="Toggle Theme (Light/Dark)">
+          <svg viewBox="0 0 24 24" id="theme-icon"><use href="#icon-sun"></use></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Sidebar Section -->
+    <aside class="app-sidebar">
+      
+      <!-- Engine Controls Section -->
+      <div class="sidebar-section">
+        <h3>Humanizer Profile</h3>
+        <div class="config-group">
+          <label for="profile-strength">Humanization Strength</label>
+          <div class="select-wrapper">
+            <select id="profile-strength">
+              <option value="light">Light (Factual Polish)</option>
+              <option value="balanced" selected>Balanced (Standard Flow)</option>
+              <option value="heavy">Heavy (Deep Restructure)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="config-group">
+          <label for="profile-formality">Formality Shift</label>
+          <div class="select-wrapper">
+            <select id="profile-formality">
+              <option value="casual">Casual (Conversational)</option>
+              <option value="balanced" selected>Balanced (Mixed Standard)</option>
+              <option value="professional">Professional (Formal)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Section -->
+      <div class="sidebar-section">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h3>Conversion History</h3>
+          <button id="btn-clear-history" class="btn-action" style="padding: 2px 6px; font-size: 10px;" title="Clear History">Clear</button>
+        </div>
+        <div id="history-list" class="history-list">
+          <div class="empty-state">No recent rewrites</div>
+        </div>
+      </div>
+
+      <!-- Favorites Section -->
+      <div class="sidebar-section">
+        <h3>Starred Favorites</h3>
+        <div id="favorites-list" class="favorites-list">
+          <div class="empty-state">Star a rewrite to save it</div>
+        </div>
+      </div>
+
+      <!-- Shortcuts list -->
+      <div class="sidebar-section" style="margin-top: auto; border-top: 1px solid var(--border-glass); padding-top: 16px;">
+        <h3>Keyboard Shortcuts</h3>
+        <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.6;">
+          <div><kbd style="background:var(--border-glass); padding: 1px 4px; border-radius: 3px;">Ctrl + Enter</kbd> Humanize</div>
+          <div><kbd style="background:var(--border-glass); padding: 1px 4px; border-radius: 3px;">Ctrl + Z</kbd> Undo</div>
+          <div><kbd style="background:var(--border-glass); padding: 1px 4px; border-radius: 3px;">Ctrl + Y</kbd> Redo</div>
+          <div><kbd style="background:var(--border-glass); padding: 1px 4px; border-radius: 3px;">Ctrl + S</kbd> Export TXT</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="app-main">
+      
+      <!-- Editor Panes Split -->
+      <div class="editor-pane">
+        
+        <!-- Original Text Area -->
+        <div class="editor-card">
+          <div class="editor-header">
+            <span class="editor-title badge-orig">
+              Original AI Content
+            </span>
+            <div class="editor-actions">
+              <button id="btn-paste" class="btn-action" title="Paste Text">
+                <svg viewBox="0 0 24 24"><use href="#icon-paste"></use></svg> Paste
+              </button>
+              <button id="btn-clear" class="btn-action" title="Clear All">
+                <svg viewBox="0 0 24 24"><use href="#icon-trash"></use></svg> Clear
+              </button>
+            </div>
+          </div>
+          
+          <div class="editor-body">
+            <textarea id="text-input" class="editor-textarea" placeholder="Paste your stiff, machine-like AI generated text here... (minimum 5 words)"></textarea>
+          </div>
+          
+          <div class="editor-footer">
+            <div class="editor-stats">
+              <span id="orig-words">0 words</span>
+              <span id="orig-chars">0 chars</span>
+            </div>
+            <span>Input pane</span>
+          </div>
+        </div>
+
+        <!-- Humanized Text Area -->
+        <div class="editor-card">
+          <div class="editor-header">
+            <span class="editor-title badge-human">
+              Humanized Output
+            </span>
+            <div class="editor-actions">
+              <button id="btn-favorite" class="btn-action" title="Star this version" disabled>
+                <svg viewBox="0 0 24 24"><use href="#icon-star"></use></svg> Favorite
+              </button>
+              <button id="btn-copy" class="btn-action" title="Copy to Clipboard" disabled>
+                <svg viewBox="0 0 24 24"><use href="#icon-copy"></use></svg> Copy
+              </button>
+            </div>
+          </div>
+          
+          <div class="editor-body">
+            <div id="text-output" class="output-viewer" data-placeholder="Humanized text will appear here with dynamic flows..."></div>
+          </div>
+          
+          <div class="editor-footer">
+            <div class="editor-stats">
+              <span id="hum-words">0 words</span>
+              <span id="hum-chars">0 chars</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button id="btn-export-txt" class="btn-action" style="padding: 2px 8px; font-size: 11px;" title="Export TXT File" disabled>
+                <svg viewBox="0 0 24 24" style="width:12px; height:12px;"><use href="#icon-download"></use></svg> TXT
+              </button>
+              <button id="btn-export-pdf" class="btn-action" style="padding: 2px 8px; font-size: 11px;" title="Export Printed Report / PDF" disabled>
+                <svg viewBox="0 0 24 24" style="width:12px; height:12px;"><use href="#icon-print"></use></svg> Print Report
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trigger Button -->
+        <div class="cta-container">
+          <button id="btn-humanize" class="btn-cta">
+            <svg viewBox="0 0 24 24"><use href="#icon-wand"></use></svg> Humanize Content
+          </button>
+        </div>
+      </div>
+
+      <!-- Analytics Dashboard -->
+      <div class="dashboard-grid">
+        
+        <!-- Circular Gauge Card -->
+        <div class="dashboard-card">
+          <span class="dashboard-card-title">Natural Score</span>
+          <div class="chart-container">
+            <canvas id="gauge-canvas"></canvas>
+          </div>
+          <div style="text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: -10px;">
+            <div id="metric-readability" style="font-weight: 700;">Readability: -</div>
+            <div id="metric-style" style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Style: -</div>
+          </div>
+        </div>
+
+        <!-- Radar Comparison Chart Card -->
+        <div class="dashboard-card">
+          <span class="dashboard-card-title">Properties comparison</span>
+          <div class="chart-container">
+            <canvas id="radar-canvas"></canvas>
+          </div>
+          <div style="display: flex; justify-content: center; gap: 16px; font-size: 11px;">
+            <span style="color: var(--color-original); font-weight: 600;">● Original AI</span>
+            <span style="color: var(--color-human); font-weight: 600;">● Humanized</span>
+          </div>
+        </div>
+
+        <!-- Sentence Length Rhythm Distribution Card -->
+        <div class="dashboard-card">
+          <span class="dashboard-card-title">Sentence flow rhythm</span>
+          <div class="chart-container">
+            <canvas id="distribution-canvas"></canvas>
+          </div>
+          <div style="text-align: center; font-size: 11px; color: var(--text-secondary);">
+            Plotting sentence lengths to compare rhythm flow variations.
+          </div>
+        </div>
+
+        <!-- Metric Details Panel -->
+        <div class="dashboard-card stats-card">
+          <span class="dashboard-card-title">Linguistic Diagnostics</span>
+          
+          <div class="metrics-panel">
+            <div class="metric-box">
+              <span class="metric-label">Passive Voice</span>
+              <div class="metric-val" id="diag-passive">-</div>
+              <span class="metric-sub">Fewer passives improve flow</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Transition Density</span>
+              <div class="metric-val" id="diag-transitions">-</div>
+              <span class="metric-sub">Enhances connective tissue</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Lexical Diversity</span>
+              <div class="metric-val" id="diag-diversity">-</div>
+              <span class="metric-sub">Word variety standard</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Sentence Variety</span>
+              <div class="metric-val" id="diag-variety">-</div>
+              <span class="metric-sub">Sentence length variance</span>
+            </div>
+          </div>
+
+          <!-- Repeated Vocab Diagnostic columns -->
+          <div class="diagnostic-lists">
+            <div class="diagnostic-column">
+              <div class="diagnostic-header">Repeated Words (AI Markers)</div>
+              <div id="diag-words-container" class="diagnostic-tag-container">
+                <span style="font-size:11px; color:var(--text-muted);">No repetitive words analyzed yet.</span>
+              </div>
+            </div>
+            <div class="diagnostic-column">
+              <div class="diagnostic-header">Repeated Phrases</div>
+              <div id="diag-phrases-container" class="diagnostic-tag-container">
+                <span style="font-size:11px; color:var(--text-muted);">No repetitive phrases analyzed yet.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Bottom Status Disclaimer bar -->
+    <footer class="status-bar" style="grid-area: footer;">
+      <div>
+        Status: <span id="app-status" style="color: var(--color-human); font-weight:600;">Engine Ready</span>
+      </div>
+      <div class="disclaimer">
+        Disclaimer: Metrics & Human Scores are calculated via standard heuristic estimators. Factual context is strictly preserved.
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Loading scripts -->
+  <script src="js/engine/analyzer.js"></script>
+  <script src="js/engine/rewrite.js"></script>
+  <script src="js/ui/dashboard.js"></script>
+  <script src="js/ui/app.js"></script>
+</body>
+</html>
