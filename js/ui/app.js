@@ -347,6 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let pipeline = null;
+  let detectorPipeline = null;
 
   // --- Visual Sentence Heatmap overlay ---
   function applyHeatmap(htmlText) {
@@ -436,15 +437,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         transformers.env.allowLocalModels = false;
 
+        // Load T5 rewriter pipeline
         if (!pipeline) {
           pipeline = await transformers.pipeline('text2text-generation', 'Xenova/LaMini-Flan-T5-78M', {
             progress_callback: (data) => {
               if (data.status === 'progress') {
                 const percent = Math.round(data.progress);
                 aiProgressBar.style.width = `${percent}%`;
-                aiProgressStatus.textContent = `Downloading AI files: ${percent}% (${data.file.split('/').pop()})`;
+                aiProgressStatus.textContent = `Downloading Rewriter: ${percent}% (${data.file.split('/').pop()})`;
               } else if (data.status === 'ready') {
-                aiProgressStatus.textContent = 'Model cached! Loading inference...';
+                aiProgressStatus.textContent = 'Rewriter cached! Loading detector...';
+              }
+            }
+          });
+        }
+
+        // Load Roberta detector pipeline
+        if (!detectorPipeline) {
+          detectorPipeline = await transformers.pipeline('text-classification', 'Xenova/roberta-base-openai-detector', {
+            progress_callback: (data) => {
+              if (data.status === 'progress') {
+                const percent = Math.round(data.progress);
+                aiProgressBar.style.width = `${percent}%`;
+                aiProgressStatus.textContent = `Downloading Detector: ${percent}% (${data.file.split('/').pop()})`;
+              } else if (data.status === 'ready') {
+                aiProgressStatus.textContent = 'Detector cached! Preparing inference...';
               }
             }
           });
@@ -453,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
         aiProgressStatus.textContent = 'Synthesizing client-side humanized content...';
         aiProgressBar.style.width = '100%';
 
-        // Query model locally
+        // Query rewriter locally
         const prompt = `Rewrite this text to make it sound highly human, natural, conversational, and direct: "${inputVal}"`;
         const result = await pipeline(prompt, {
           max_new_tokens: 512,
@@ -484,6 +501,36 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Calculate metrics of rewritten human-like text
     const humStats = Analyzer.analyze(rewritten.text);
+
+    // Apply Real Roberta AI classification scores if Deep AI was used
+    if (toggleDeepAi && toggleDeepAi.checked && detectorPipeline) {
+      try {
+        const origClassResult = await detectorPipeline(inputVal);
+        let origModelScore = 50;
+        if (origClassResult && origClassResult.length > 0) {
+          origModelScore = origClassResult[0].label === 'Real' 
+            ? Math.round(origClassResult[0].score * 100) 
+            : Math.round((1 - origClassResult[0].score) * 100);
+        }
+
+        const rewrittenClassResult = await detectorPipeline(rewritten.text);
+        let rewrittenModelScore = 50;
+        if (rewrittenClassResult && rewrittenClassResult.length > 0) {
+          rewrittenModelScore = rewrittenClassResult[0].label === 'Real' 
+            ? Math.round(rewrittenClassResult[0].score * 100) 
+            : Math.round((1 - rewrittenClassResult[0].score) * 100);
+        }
+
+        // Merge Roberta detection score with heuristics
+        humStats.flowScore = Math.round((rewrittenModelScore * 0.7) + (humStats.flowScore * 0.3));
+        humStats.perplexityScore = Math.max(12, Math.min(98, rewrittenModelScore - 6 + (humStats.burstiness * 1.5)));
+        
+        origStats.flowScore = Math.round((origModelScore * 0.7) + (origStats.flowScore * 0.3));
+        origStats.perplexityScore = Math.max(12, Math.min(98, origModelScore - 6 + (origStats.burstiness * 1.5)));
+      } catch (detectorErr) {
+        console.warn("Roberta classifier execution failed:", detectorErr);
+      }
+    }
 
     // Apply Heatmap overlays
     const renderedHtml = applyHeatmap(rewritten.html);
@@ -550,7 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let activeDropdown = null;
 
-  function showSynonymDropdown(el) {
+  async function showSynonymDropdown(el) {
     closeActiveDropdown();
 
     const orig = el.getAttribute('data-orig');
@@ -558,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const synsAttr = el.getAttribute('data-syns');
     if (!synsAttr) return;
 
-    const synonyms = synsAttr.split(',');
+    let synonyms = synsAttr.split(',');
     const currentVal = el.textContent.trim().toLowerCase();
 
     // Create dropdown menu element
@@ -571,10 +618,19 @@ document.addEventListener('DOMContentLoaded', () => {
     header.textContent = orig ? `Original: ${orig}` : 'Alternatives';
     dropdown.appendChild(header);
 
-    // List of alternatives
-    synonyms.forEach(syn => {
+    // List of alternatives container
+    const itemsContainer = document.createElement('div');
+    dropdown.appendChild(itemsContainer);
+
+    // Helper to render an item
+    const renderItem = (syn) => {
       const cleanSyn = syn.trim();
       if (!cleanSyn) return;
+      
+      // Prevent duplicates
+      const exists = Array.from(itemsContainer.querySelectorAll('.synonym-dropdown-item'))
+        .some(item => item.textContent.trim().toLowerCase() === cleanSyn.toLowerCase());
+      if (exists) return;
 
       const item = document.createElement('div');
       item.className = 'synonym-dropdown-item';
@@ -595,12 +651,59 @@ document.addEventListener('DOMContentLoaded', () => {
         closeActiveDropdown();
       });
 
-      dropdown.appendChild(item);
-    });
+      itemsContainer.appendChild(item);
+    };
 
+    // Render local synonyms immediately
+    synonyms.forEach(renderItem);
+
+    // Append dropdown to body and position it (so the positioning is computed before the fetch)
     document.body.appendChild(dropdown);
+    positionDropdown(el, dropdown);
+    activeDropdown = dropdown;
+    document.addEventListener('click', closeActiveDropdown);
+
+    // Add loader element for online suggestions
+    const onlineLoader = document.createElement('div');
+    onlineLoader.className = 'synonym-dropdown-header';
+    onlineLoader.style.fontSize = '10px';
+    onlineLoader.style.color = 'var(--text-muted)';
+    onlineLoader.style.borderTop = '1px solid var(--border-glass)';
+    onlineLoader.style.marginTop = '4px';
+    onlineLoader.style.paddingTop = '6px';
+    onlineLoader.textContent = 'Searching online thesaurus...';
+    dropdown.appendChild(onlineLoader);
+
+    // Fetch from Datamuse API in the background
+    const cleanWord = currentVal.replace(/[^a-z]/g, '');
+    if (cleanWord && navigator.onLine) {
+      try {
+        const response = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(cleanWord)}&max=6`);
+        if (response.ok) {
+          const data = await response.json();
+          const onlineSyns = data.map(item => item.word);
+          if (onlineSyns.length > 0) {
+            onlineLoader.textContent = 'Online suggestions:';
+            onlineSyns.forEach(renderItem);
+            // Re-position in case the dropdown height expanded downwards
+            positionDropdown(el, dropdown);
+          } else {
+            onlineLoader.remove();
+          }
+        } else {
+          onlineLoader.remove();
+        }
+      } catch (err) {
+        console.warn('Datamuse API failure', err);
+        onlineLoader.remove();
+      }
+    } else {
+      onlineLoader.remove();
+    }
+  }
+
+  function positionDropdown(el, dropdown) {
     const rect = el.getBoundingClientRect();
-    
     let left = rect.left + window.scrollX;
     let top = rect.bottom + window.scrollY + 6;
 
@@ -608,7 +711,6 @@ document.addEventListener('DOMContentLoaded', () => {
       left = window.innerWidth - 170;
     }
     
-    // Add dropdown to document body, then inspect its height for accurate placement
     const dropdownHeight = dropdown.offsetHeight;
     if (top + dropdownHeight > window.innerHeight + window.scrollY) {
       top = rect.top + window.scrollY - dropdownHeight - 6;
@@ -616,10 +718,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dropdown.style.left = `${left}px`;
     dropdown.style.top = `${top}px`;
-    
-    activeDropdown = dropdown;
-
-    document.addEventListener('click', closeActiveDropdown);
   }
 
   function closeActiveDropdown() {
