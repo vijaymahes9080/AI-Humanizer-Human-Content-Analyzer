@@ -56,29 +56,34 @@ const Dashboard = (() => {
       this.currentVal = 0;
       this.targetVal = 0;
       this.animationSpeed = 0.05;
-      this.animationFrame = null;
+      this.time = 0;
       this.label = 'Human Score';
+      this.startLoop();
+    }
+
+    startLoop() {
+      const tick = () => {
+        if (!this.canvas) return;
+        this.time += 0.035; // Increment time for liquid wavy animations
+
+        // Smoothly interpolate current value to target value
+        const diff = this.targetVal - this.currentVal;
+        if (Math.abs(diff) < 0.1) {
+          this.currentVal = this.targetVal;
+        } else {
+          this.currentVal += diff * this.animationSpeed;
+        }
+
+        this.draw();
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
     }
 
     render(targetVal, label = 'Human Score') {
       this.targetVal = targetVal;
       this.label = label;
-      
-      const animate = () => {
-        const diff = this.targetVal - this.currentVal;
-        if (Math.abs(diff) < 0.1) {
-          this.currentVal = this.targetVal;
-          this.draw();
-          cancelAnimationFrame(this.animationFrame);
-        } else {
-          this.currentVal += diff * this.animationSpeed;
-          this.draw();
-          this.animationFrame = requestAnimationFrame(animate);
-        }
-      };
-      
-      cancelAnimationFrame(this.animationFrame);
-      this.animationFrame = requestAnimationFrame(animate);
+      // Loop is running continuously, so we just update values.
     }
 
     draw() {
@@ -87,16 +92,16 @@ const Dashboard = (() => {
       ctx.clearRect(0, 0, width, height);
 
       const cx = width / 2;
-      const cy = height * 0.65;
-      const radius = Math.min(width, height) * 0.45;
+      const cy = height * 0.52;
+      const radius = Math.min(width, height) * 0.44;
       const startAngle = Math.PI * 0.9;
       const endAngle = Math.PI * 2.1;
       const range = endAngle - startAngle;
 
-      // 1. Draw Background Track
+      // 1. Draw Outer Track ring
       ctx.beginPath();
       ctx.arc(cx, cy, radius, startAngle, endAngle);
-      ctx.lineWidth = 14;
+      ctx.lineWidth = 10;
       ctx.strokeStyle = colors.grid;
       ctx.lineCap = 'round';
       ctx.stroke();
@@ -106,9 +111,8 @@ const Dashboard = (() => {
         ctx.beginPath();
         const currentAngle = startAngle + (this.currentVal / 100) * range;
         ctx.arc(cx, cy, radius, startAngle, currentAngle);
-        ctx.lineWidth = 16;
+        ctx.lineWidth = 12;
         
-        // Dynamic color transition based on score
         const grad = ctx.createLinearGradient(0, cy, width, cy);
         grad.addColorStop(0, colors.original);
         grad.addColorStop(0.5, colors.accent);
@@ -117,27 +121,90 @@ const Dashboard = (() => {
         ctx.strokeStyle = grad;
         ctx.lineCap = 'round';
         
-        // Apply glow effect
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 8;
         ctx.shadowColor = colors.glow;
         ctx.stroke();
-        
-        // Reset shadow
         ctx.shadowBlur = 0;
       }
 
-      // 3. Draw Center Text (Score)
+      // 3. Draw Generative "Linguistic DNA" Blob inside the circular space
+      const blobRadius = radius * 0.65;
+      const isRobotic = this.currentVal < 45;
+      
+      ctx.save();
+      ctx.beginPath();
+      
+      if (isRobotic) {
+        // Stiff, angular static shape (crystal-like) representing AI/robotic content
+        const numVertices = 6;
+        for (let i = 0; i < numVertices; i++) {
+          const angle = (i / numVertices) * Math.PI * 2 - Math.PI / 6;
+          const px = cx + Math.cos(angle) * blobRadius;
+          const py = cy + Math.sin(angle) * blobRadius;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        
+        const gradient = ctx.createRadialGradient(cx, cy, 2, cx, cy, blobRadius);
+        gradient.addColorStop(0, 'rgba(148, 163, 184, 0.25)'); // cold grey
+        gradient.addColorStop(1, 'rgba(239, 68, 68, 0.1)');    // stiff red
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        // Fluid, breathing, rotating liquid shape representing human content flow
+        const numPoints = 60;
+        const speed = 2.2;
+        const amplitude = 5 + (this.currentVal / 100) * 7; 
+        
+        for (let i = 0; i < numPoints; i++) {
+          const angle = (i / numPoints) * Math.PI * 2;
+          
+          // Combine multiple sine waves for multi-layered fluid mechanics
+          const wave1 = Math.sin(angle * 4 + this.time * speed) * amplitude;
+          const wave2 = Math.cos(angle * 3 - this.time * 1.5) * (amplitude * 0.5);
+          const r = blobRadius + wave1 + wave2;
+          
+          // Add a slow rotation factor over time
+          const px = cx + Math.cos(angle + this.time * 0.04) * r;
+          const py = cy + Math.sin(angle + this.time * 0.04) * r;
+          
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        
+        const gradient = ctx.createRadialGradient(cx, cy, 2, cx, cy, blobRadius + amplitude);
+        gradient.addColorStop(0, 'rgba(20, 184, 166, 0.35)');   // fluid teal
+        gradient.addColorStop(0.6, 'rgba(99, 102, 241, 0.25)'); // fluid purple/indigo
+        gradient.addColorStop(1, 'rgba(20, 184, 166, 0.02)');   // smooth boundary fade
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        ctx.strokeStyle = colors.human;
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = colors.glow;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+      ctx.restore();
+
+      // 4. Draw Center Text Overlay (Score and Label)
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
       ctx.fillStyle = colors.textHighlight;
-      ctx.font = 'bold 36px Outfit, Inter, system-ui, sans-serif';
-      ctx.fillText(`${Math.round(this.currentVal)}%`, cx, cy - 10);
+      ctx.font = 'bold 32px Outfit, Inter, system-ui, sans-serif';
+      ctx.fillText(`${Math.round(this.currentVal)}%`, cx, cy - 8);
 
-      // Label below score
       ctx.fillStyle = colors.text;
-      ctx.font = '500 13px Inter, system-ui, sans-serif';
-      ctx.fillText(this.label, cx, cy + 25);
+      ctx.font = '500 12px Inter, system-ui, sans-serif';
+      ctx.fillText(this.label, cx, cy + 22);
     }
   }
 

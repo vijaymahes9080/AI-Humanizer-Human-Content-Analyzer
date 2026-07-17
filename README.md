@@ -11,24 +11,27 @@ An NLP rule-based pipeline that processes text paragraph by paragraph and senten
 - **Protected Entity Extraction**: Identifies and locks proper nouns, URLs, emails, dates, numbers, and markdown citations. These are restored post-rewrite.
 - **Active Voice Promotion**: Identifies passive voice structures (e.g., "was written by") and flips them into clear active sentences where possible.
 - **Filler Word & Redundancy Reduction**: Identifies and removes common conversational fluff (e.g., "needless to say", "in order to").
-- **Sentence Restructuring (Splitting & Merging)**: Splits bloated sentences containing multiple conjunctions, and merges choppy short sentences to optimize the natural rhythm.
-- **Vocabulary Diversity**: Intelligently swaps highly repetitive or robotic vocabulary with contextual human synonyms.
-- **Contraction Optimization**: Adapts contractions based on user-selected profiles (Casual, Balanced, or Professional).
+- **Sentence Restructuring (Splitting & Merging)**: Splits bloated sentences, swaps clauses, and merges choppy sentences.
+- **Vocabulary Diversity**: Intelligently swaps robotic terms with human equivalents.
+- **Style Profiles**: Adapt settings based on Casual, Balanced, Professional, or **Creative (Narrative)** profiles.
 
 ### 2. Linguistic Analyzer & Diagnostics Dashboard
 Computes a complete profile of the text:
 - **Readability & Grade Levels**: Flesch-Kincaid Reading Ease, Gunning Fog Index, and estimated readability level.
 - **Writing Characteristics**: Character, word, sentence, and paragraph counts.
-- **Linguistic Metrics**: Lexical diversity percentage, transition word density, passive voice count, and sentence length variety (standard deviation).
-- **Repetitive Vocabulary Detector**: Highlights frequently repeated words and phrases.
-- **Interactive Canvas Visualizations**: Renders real-time, animated Gauge, Radar, and Line charts using the HTML5 Canvas API.
+- **Linguistic Metrics**: Lexical diversity percentage, transition word density, passive voice count, and sentence length variety.
+- **Interactive Canvas Visualizations**: Renders:
+  - **Generative "Linguistic DNA" Blob**: A fluid wave blob representing text flow (AI shows as a rigid static hexagon, humanized text shows as a breathing, rotating, glowing liquid shape).
+  - **Radar Properties Chart**: Visualizes text features (Flow, Variety, Diversity, Formality, Grammar).
+  - **Sentence Length Distribution Graph**: Plots rhythm and variety comparisons.
 
 ### 3. Desktop SaaS User Experience
-- **Adaptive Layout**: Dual text panel layout (Original vs. Humanized) with interactive stats.
+- **Adaptive Layout**: Dual text panel layout (Original vs. Humanized) with visual diff change highlights (hover to view original values).
+- **Interactive Synonym dropdown**: Click any highlighted synonym to view alternatives and update text dynamically.
 - **State Controls**: Full support for Undo/Redo stacks, history log, and starred favorites saved to local storage.
 - **Theme Engine**: Seamless switching between dark glassmorphism (default) and crisp light glassmorphism.
-- **Professional Exports**: Export to plain `.txt` file, or trigger native browser printing styled as a professional multi-page report card.
-- **Offline Support**: Leverages a service worker to cache shell assets. Fully operational without an internet connection.
+- **Professional Exports**: Export to plain `.txt` file, or trigger native browser printing styled as a professional report card.
+- **Offline Support**: Cache assets via service worker for 100% offline support.
 
 ---
 

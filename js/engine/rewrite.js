@@ -123,6 +123,30 @@ const RewriteEngine = (() => {
     'requisite': ['needed', 'required']
   };
 
+  // Creative/Storytelling synonym replacements
+  const CREATIVE_SYNONYMS = {
+    'determine': ['unravel', 'decipher', 'grasp'],
+    'foster': ['kindle', 'nurture', 'cultivate'],
+    'implement': ['sculpt', 'weave', 'forge'],
+    'optimize': ['elevate', 'transcend', 'polish'],
+    'provide': ['bestow', 'impart', 'grant'],
+    'assist': ['guide', 'support'],
+    'obtain': ['gather', 'glean', 'reap'],
+    'purchase': ['acquire'],
+    'require': ['crave', 'seek', 'call for'],
+    'numerous': ['myriad', 'countless', 'endless'],
+    'additional': ['further', 'untapped'],
+    'terminate': ['dissolve', 'conclude'],
+    'frequently': ['time and again', 'often'],
+    'substantially': ['profoundly', 'deeply'],
+    'demonstrate': ['mirror', 'paint', 'reveal'],
+    'individual': ['soul', 'seeker'],
+    'individuals': ['people', 'wanderers'],
+    'utilization': ['harnessing', 'mastery'],
+    'methodology': ['craft', 'artistry'],
+    'fundamental': ['primal', 'core', 'cardinal']
+  };
+
   // Casual contraction replacements
   const CONTRACTIONS = {
     'do not': "don't",
@@ -368,7 +392,8 @@ const RewriteEngine = (() => {
 
     // 6. Synonym replacements
     if (strength !== 'light') {
-      for (const [word, synonyms] of Object.entries(SYNONYMS_MAP)) {
+      const mergedMap = { ...SYNONYMS_MAP, ...(formality === 'creative' ? CREATIVE_SYNONYMS : {}) };
+      for (const [word, synonyms] of Object.entries(mergedMap)) {
         const pattern = new RegExp(`\\b${word}\\b(?![^<>]*>)`, 'gi');
         if (pattern.test(s)) {
           const prob = strength === 'heavy' ? 0.8 : 0.5;
@@ -378,6 +403,9 @@ const RewriteEngine = (() => {
               syn = synonyms[0];
             } else if (formality === 'professional') {
               syn = synonyms[synonyms.length - 1] || word;
+            } else if (formality === 'creative') {
+              // Prefer narrative elements
+              syn = synonyms[0];
             } else {
               syn = pickRandom(synonyms);
             }
