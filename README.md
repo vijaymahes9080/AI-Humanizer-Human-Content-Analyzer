@@ -101,7 +101,27 @@ Computes a complete profile of the text:
 
 ---
 
+## Future Enhancements & Roadmap
+
+To further elevate the capabilities of **AI Humanizer Pro**, the following features are planned for future releases:
+
+### 1. Client-Side AI Model Integration (WebGPU)
+- **In-Browser LLMs**: Leverage [Transformers.js](https://huggingface.co/docs/transformers.js) and WebGPU to run quantized local language models (like *Llama-3-8B-Instruct* or *Gemma-2B*) directly inside the browser.
+- **Benefits**: Achieves deep, semantic rewriting capabilities similar to cloud-based LLMs while preserving 100% data privacy and requiring zero API server costs.
+
+### 2. Upgraded Heuristic Diagnostics
+- **Visual Sentence Heatmap**: Render a sentence-by-sentence grade-level map directly inside the output editor (coloring sentences in a green-to-red gradient to denote which sentences sound the most robotic/uniform).
+- **Perplexity & Burstiness Math**: Calculate and display raw perplexity (word selection predictability) and burstiness (sentence length variance) scores, mimicking the math used by popular AI content detectors.
+
+### 3. Workflow Integration
+- **Chrome/Firefox Extension**: Create a web extension to let users humanize content directly on Google Docs, Medium, Gmail, and WordPress.
+- **Document Imports**: Enable client-side reading of `.docx` and `.pdf` files, and exporting output as formatted `.docx` files.
+- **Custom Terminology Dictionary**: Allow users to upload custom CSV/JSON dictionaries to define terms that should either be locked or swapped with custom vocabulary.
+
+---
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
+
 
