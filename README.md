@@ -73,3 +73,10 @@ Computes a complete profile of the text:
 - **Render Performance**: Canvas visualizers use standard `requestAnimationFrame` for 60fps enter-animations.
 - **Memory Footprint**: Text structures are tokenized iteratively, ensuring low memory consumption even with texts exceeding 10,000 words.
 - **Disclaimer**: Write-analyzer scores and Humanized percentages are heuristic estimations. Results are not mathematical guarantees of bypassing detector networks.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
+
