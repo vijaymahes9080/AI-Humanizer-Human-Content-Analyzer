@@ -303,6 +303,16 @@ const Analyzer = (() => {
     flowScore -= (passiveVoicePct * 0.2); // passive voice disrupts flow
     flowScore = Math.max(0, Math.min(100, flowScore));
 
+    // Perplexity estimation (predictability index)
+    // Human text has high perplexity (unpredictable), AI has low perplexity (rigidly structured)
+    let estimatedPerplexity = 35;
+    estimatedPerplexity += (sentenceVariety * 2.5); // Sentence length variation makes rhythm unpredictable
+    estimatedPerplexity += (vocabDiversity * 0.4);  // Lexical diversity increases unpredictability
+    estimatedPerplexity += (complexWordsCount / wordCount * 100 * 0.2); // Complex vocabulary increases perplexity
+    estimatedPerplexity -= Math.max(0, (transitionDensity - 12) * 0.7); // Formulaic transitions decrease perplexity
+    estimatedPerplexity -= (repeatedPhrases.length * 1.5); // Repeated patterns decrease perplexity
+    const perplexityScore = Math.max(12, Math.min(98, estimatedPerplexity));
+
     return {
       charCount,
       charNoSpaces,
@@ -326,6 +336,8 @@ const Analyzer = (() => {
       formalityScore: formality,
       lexicalRichness,
       coherenceEstimate,
+      burstiness: sentenceVariety, // raw standard deviation
+      perplexityScore,
       // Helper data for charts
       sentenceLengths
     };
@@ -358,6 +370,8 @@ const Analyzer = (() => {
       formalityScore: 0,
       lexicalRichness: 0,
       coherenceEstimate: 0,
+      burstiness: 0,
+      perplexityScore: 0,
       sentenceLengths: []
     };
   }

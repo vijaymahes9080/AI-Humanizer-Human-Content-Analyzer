@@ -321,6 +321,25 @@ const RewriteEngine = (() => {
       }
     }
 
+    // 0b. Custom Dictionary Substitution (User uploaded CSV mappings)
+    if (options.customDict && Object.keys(options.customDict).length > 0) {
+      for (const [origWord, replacement] of Object.entries(options.customDict)) {
+        const escapedOrig = origWord.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s+/g, '\\s+');
+        if (!escapedOrig) continue;
+        const pattern = new RegExp(`\\b${escapedOrig}\\b(?![^<>]*>)`, 'gi');
+        if (pattern.test(s)) {
+          s = s.replace(pattern, (match) => {
+            const cleanRep = replacement.trim();
+            let casedRep = cleanRep;
+            if (match.charAt(0) === match.charAt(0).toUpperCase()) {
+              casedRep = casedRep.charAt(0).toUpperCase() + casedRep.slice(1);
+            }
+            return `<span class="highlight-change" data-orig="${match}" data-type="synonym" data-syns="${cleanRep}">${casedRep}</span>`;
+          });
+        }
+      }
+    }
+
     // 1. Clause Swapping (if starting with subordinating conjunctions)
     if (strength === 'heavy' && Math.random() < 0.65) {
       s = swapSubordinateClauses(s);

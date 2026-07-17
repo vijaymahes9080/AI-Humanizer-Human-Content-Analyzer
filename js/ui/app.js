@@ -49,6 +49,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const appStatus = document.getElementById('app-status');
   const offlineBanner = document.getElementById('offline-banner');
 
+  // Advanced feature element references
+  const toggleDeepAi = document.getElementById('toggle-deep-ai');
+  const btnDictTrigger = document.getElementById('btn-dict-trigger');
+  const dictUpload = document.getElementById('dict-upload');
+  const dictStatus = document.getElementById('dict-status');
+  const toggleHeatmap = document.getElementById('toggle-heatmap');
+  const aiLoadingOverlay = document.getElementById('ai-loading-overlay');
+  const aiProgressBar = document.getElementById('ai-progress-bar');
+  const aiProgressStatus = document.getElementById('ai-progress-status');
+
   // --- Core State ---
   let state = {
     theme: 'dark',
@@ -56,7 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
     favorites: [],
     undoStack: [],
     redoStack: [],
-    activeRecord: null
+    activeRecord: null,
+    customDict: {},
+    deepAi: false
   };
 
   // --- Initialize Custom Canvas Charts ---
@@ -69,7 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
     state.theme = localStorage.getItem('ai_humanizer_theme') || 'dark';
     state.history = JSON.parse(localStorage.getItem('ai_humanizer_history')) || [];
     state.favorites = JSON.parse(localStorage.getItem('ai_humanizer_favorites')) || [];
+    state.customDict = JSON.parse(localStorage.getItem('ai_humanizer_custom_dict')) || {};
     
+    // Update dictionary visual indicator
+    const keysCount = Object.keys(state.customDict).length;
+    if (keysCount > 0 && dictStatus) {
+      dictStatus.textContent = `${keysCount} active term maps`;
+    }
+
     // Apply theme
     document.documentElement.setAttribute('data-theme', state.theme);
     const themeIcon = document.getElementById('theme-icon');
@@ -298,6 +317,11 @@ document.addEventListener('DOMContentLoaded', () => {
     diagDiversity.textContent = `${Math.round(humStats.vocabDiversity)}%`;
     diagVariety.textContent = `${Math.round(humStats.sentenceVariety)}%`;
 
+    const diagPerplexity = document.getElementById('diag-perplexity');
+    const diagBurstiness = document.getElementById('diag-burstiness');
+    if (diagPerplexity) diagPerplexity.textContent = `${Math.round(humStats.perplexityScore)}%`;
+    if (diagBurstiness) diagBurstiness.textContent = `${humStats.burstiness ? humStats.burstiness.toFixed(1) : '0.0'}`;
+
     // 2. Set Repeated Words Tags
     if (humStats.repeatedWords && humStats.repeatedWords.length > 0) {
       diagWordsContainer.innerHTML = humStats.repeatedWords.map(rw => `
@@ -322,8 +346,56 @@ document.addEventListener('DOMContentLoaded', () => {
     distributionChart.render(origStats.sentenceLengths, humStats.sentenceLengths);
   }
 
+  let pipeline = null;
+
+  // --- Visual Sentence Heatmap overlay ---
+  function applyHeatmap(htmlText) {
+    if (!toggleHeatmap || !toggleHeatmap.checked) return htmlText;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlText;
+    
+    // Split sentences inside the HTML content, avoiding tag attributes
+    const sentences = tempDiv.innerHTML.split(/(?<=[.!?])\s+(?=[A-Z0-9"']|$)/);
+    
+    const heatmapped = sentences.map(s => {
+      if (!s.trim()) return s;
+      
+      const cleanText = s.replace(/<[^>]*>/g, '');
+      const wordsCount = Analyzer.getWords(cleanText).length;
+      if (wordsCount < 3) return s;
+
+      const stats = Analyzer.analyze(cleanText);
+      const isStiff = stats.passiveVoicePct > 0 || wordsCount > 20 || stats.formalityScore > 62;
+
+      // Color mapping: light teal for humanized sentences, soft red for predictable robotic ones
+      let color = 'rgba(20, 184, 166, 0.12)'; // Teal
+      let label = `Natural flow. Words: ${wordsCount}`;
+
+      if (isStiff) {
+        const alpha = Math.min(0.35, 0.12 + (stats.formalityScore / 100) * 0.22);
+        color = `rgba(239, 68, 68, ${alpha})`; // Red
+        label = `Robotic syntax structure. Formality: ${Math.round(stats.formalityScore)}%`;
+      }
+
+      return `<span class="sentence-heatmap" style="background-color: ${color};" data-tooltip="${label}">${s}</span>`;
+    });
+
+    return heatmapped.join(' ');
+  }
+
+  if (toggleHeatmap) {
+    toggleHeatmap.addEventListener('change', () => {
+      if (state.activeRecord) {
+        const rendered = applyHeatmap(state.activeRecord.humanizedHtml);
+        textOutput.innerHTML = rendered;
+        bindHighlightClickEvents();
+      }
+    });
+  }
+
   // --- Humanize Core Trigger ---
-  function triggerHumanize() {
+  async function triggerHumanize() {
     const inputVal = textInput.value.trim();
     const wordCount = Analyzer.getWords(inputVal).length;
 
@@ -337,27 +409,87 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    setStatus('Processing text heuristics...');
-    
     // Save current input to Undo stack before rewriting
     pushUndo(inputVal);
 
     const options = {
       strength: selectStrength.value,
-      formality: selectFormality.value
+      formality: selectFormality.value,
+      customDict: state.customDict
     };
 
     // Calculate metrics of original stiff text
     const origStats = Analyzer.analyze(inputVal);
+    let rewritten = null;
 
-    // Run custom rule-based rewrite pipeline
-    const rewritten = RewriteEngine.humanize(inputVal, options);
+    // Check if Local Deep AI is toggled
+    if (toggleDeepAi && toggleDeepAi.checked) {
+      setStatus('Loading local AI model...');
+      aiLoadingOverlay.style.display = 'flex';
+      aiProgressBar.style.width = '0%';
+      aiProgressStatus.textContent = 'Initializing WebGPU/Wasm modules...';
+
+      try {
+        if (typeof transformers === 'undefined') {
+          throw new Error('Transformers library not loaded from CDN.');
+        }
+
+        transformers.env.allowLocalModels = false;
+
+        if (!pipeline) {
+          pipeline = await transformers.pipeline('text2text-generation', 'Xenova/LaMini-Flan-T5-78M', {
+            progress_callback: (data) => {
+              if (data.status === 'progress') {
+                const percent = Math.round(data.progress);
+                aiProgressBar.style.width = `${percent}%`;
+                aiProgressStatus.textContent = `Downloading AI files: ${percent}% (${data.file.split('/').pop()})`;
+              } else if (data.status === 'ready') {
+                aiProgressStatus.textContent = 'Model cached! Loading inference...';
+              }
+            }
+          });
+        }
+
+        aiProgressStatus.textContent = 'Synthesizing client-side humanized content...';
+        aiProgressBar.style.width = '100%';
+
+        // Query model locally
+        const prompt = `Rewrite this text to make it sound highly human, natural, conversational, and direct: "${inputVal}"`;
+        const result = await pipeline(prompt, {
+          max_new_tokens: 512,
+          temperature: 0.75,
+          repetition_penalty: 1.25
+        });
+
+        const generatedText = result[0].generated_text;
+
+        // Formats model text using visual highlighter spans
+        rewritten = RewriteEngine.humanize(generatedText, {
+          ...options,
+          strength: 'light'
+        });
+
+        setStatus('Local LLM generation complete!');
+      } catch (err) {
+        console.error(err);
+        setStatus('Deep AI failed. Running heuristic fallback...', true);
+        rewritten = RewriteEngine.humanize(inputVal, options);
+      } finally {
+        aiLoadingOverlay.style.display = 'none';
+      }
+    } else {
+      setStatus('Processing text heuristics...');
+      rewritten = RewriteEngine.humanize(inputVal, options);
+    }
     
     // Calculate metrics of rewritten human-like text
     const humStats = Analyzer.analyze(rewritten.text);
 
+    // Apply Heatmap overlays
+    const renderedHtml = applyHeatmap(rewritten.html);
+
     // Apply HTML typing/fade emulation
-    animateTextDisplay(rewritten.html);
+    animateTextDisplay(renderedHtml);
 
     updateStats(rewritten.text, true);
     
@@ -586,6 +718,92 @@ document.addEventListener('DOMContentLoaded', () => {
       updateStats(textInput.value, false);
       triggerHumanize();
       setStatus('Andy Stapleton Demo loaded!');
+    });
+  }
+
+  // --- Drag and Drop File Handlers ---
+  const dropzone = document.querySelector('.editor-card');
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const file = files[0];
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'txt' || ext === 'md' || ext === 'json') {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            let text = event.target.result;
+            if (ext === 'json') {
+              try {
+                const parsed = JSON.parse(text);
+                text = parsed.text || parsed.content || JSON.stringify(parsed, null, 2);
+              } catch (err) {
+                setStatus('Error parsing JSON file', true);
+                return;
+              }
+            }
+            pushUndo(textInput.value);
+            textInput.value = text;
+            updateStats(text, false);
+            setStatus(`Loaded file: ${file.name}`);
+          };
+          reader.readAsText(file);
+        } else {
+          setStatus('Supported formats: .txt, .md, .json', true);
+        }
+      }
+    });
+  }
+
+  // --- Custom CSV Dictionary Uploader ---
+  if (btnDictTrigger && dictUpload) {
+    btnDictTrigger.addEventListener('click', () => {
+      dictUpload.click();
+    });
+
+    dictUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const csvText = event.target.result;
+          const lines = csvText.split(/\r?\n/);
+          const mapping = {};
+          
+          lines.forEach(line => {
+            const parts = line.split(',');
+            if (parts.length >= 2) {
+              const key = parts[0].trim();
+              const val = parts[1].trim();
+              if (key && val) {
+                mapping[key] = val;
+              }
+            }
+          });
+          
+          state.customDict = mapping;
+          localStorage.setItem('ai_humanizer_custom_dict', JSON.stringify(mapping));
+          
+          const keysCount = Object.keys(mapping).length;
+          if (dictStatus) {
+            dictStatus.textContent = `${keysCount} active term maps`;
+          }
+          setStatus(`Successfully loaded ${keysCount} custom term mappings!`);
+        };
+        reader.readAsText(file);
+      }
     });
   }
 
