@@ -311,7 +311,7 @@ const RewriteEngine = (() => {
     // 0. Phrase-level Conversational Blocks (Targeting typical AI structures in casual/creative modes)
     if (formality === 'casual' || formality === 'creative') {
       for (const [robotic, humanized] of Object.entries(CONVERSATIONAL_BLOCKS)) {
-        const escapedRobotic = robotic.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const escapedRobotic = robotic.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s+/g, '\\s+');
         const pattern = new RegExp(`\\b${escapedRobotic}\\b(?![^<>]*>)`, 'gi');
         if (pattern.test(s)) {
           s = s.replace(pattern, (match) => {
@@ -404,7 +404,8 @@ const RewriteEngine = (() => {
 
     // 5. Filler words reduction
     for (const [redundancy, simple] of Object.entries(FILLERS_MAP)) {
-      const pattern = new RegExp(`\\b${redundancy}\\b(?![^<>]*>)`, 'gi');
+      const escapedRedundancy = redundancy.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s+/g, '\\s+');
+      const pattern = new RegExp(`\\b${escapedRedundancy}\\b(?![^<>]*>)`, 'gi');
       if (pattern.test(s)) {
         if (formality === 'professional' && (redundancy === 'conduct an analysis of' || redundancy === 'prior to')) {
           continue;
