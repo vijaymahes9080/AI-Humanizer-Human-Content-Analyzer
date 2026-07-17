@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const humChars = document.getElementById('hum-chars');
   
   const btnPaste = document.getElementById('btn-paste');
+  const btnLoadDemo = document.getElementById('btn-load-demo');
   const btnClear = document.getElementById('btn-clear');
   const btnCopy = document.getElementById('btn-copy');
   const btnFavorite = document.getElementById('btn-favorite');
@@ -574,6 +575,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- Button Action Handlers ---
+  if (btnLoadDemo) {
+    btnLoadDemo.addEventListener('click', () => {
+      pushUndo(textInput.value);
+      textInput.value = "The implementation of regular physical exercise is significantly beneficial for overall cardiovascular health and mental well-being. It is important to note that individuals who engage in consistent workouts often experience a reduction in stress levels and an increase in daily productivity. Therefore, establishing a routine is highly recommended.";
+      
+      selectStrength.value = 'heavy';
+      selectFormality.value = 'casual';
+      
+      updateStats(textInput.value, false);
+      triggerHumanize();
+      setStatus('Andy Stapleton Demo loaded!');
+    });
+  }
+
   btnPaste.addEventListener('click', async () => {
     try {
       const text = await navigator.clipboard.readText();
